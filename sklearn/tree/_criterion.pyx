@@ -22,6 +22,8 @@ from libc.string cimport memcpy
 from libc.string cimport memset
 from libc.math cimport fabs
 
+from libc.stdio cimport printf
+
 import numpy as np
 cimport numpy as np
 np.import_array()
@@ -595,6 +597,36 @@ cdef class Entropy(ClassificationCriterion):
         impurity_right[0] = entropy_right / self.n_outputs
 
 
+cdef class GainRatio(Entropy):
+    cdef double IV(self) nogil:
+        cdef double iv = 0
+        if self.weighted_n_left > 0:
+            iv -= ((self.weighted_n_left / self.weighted_n_node_samples)
+                   * log(self.weighted_n_left / self.weighted_n_node_samples))
+        if self.weighted_n_right > 0:
+            iv -= ((self.weighted_n_right / self.weighted_n_node_samples)
+                   * log(self.weighted_n_right / self.weighted_n_node_samples))
+        return iv + 10
+
+    cdef double node_impurity(self) nogil:
+        printf("Entropy: %g, iv: %g, gain_ratio: %g\n",
+               Entropy.node_impurity(self), self.IV(),
+               Entropy.node_impurity(self) / self.IV())
+        printf("left: %g, right: %g\n", self.weighted_n_left,
+               self.weighted_n_right)
+        printf("total: %g\n", self.weighted_n_node_samples)
+        #return Entropy.node_impurity(self) / self.IV()
+        return Entropy.node_impurity(self)
+
+    cdef void children_impurity(self, double* impurity_left,
+                                double* impurity_right) nogil:
+        Entropy.children_impurity(self, impurity_left,
+                                  impurity_right)
+        #cdef double iv = self.IV()
+        #impurity_left[0] /= iv
+        #impurity_right[0] /= iv
+
+
 cdef class Gini(ClassificationCriterion):
     r"""Gini Index impurity criterion.
 
@@ -687,99 +719,6 @@ cdef class Gini(ClassificationCriterion):
 
         impurity_left[0] = gini_left / self.n_outputs
         impurity_right[0] = gini_right / self.n_outputs
-
-
-cdef class GainRatio(Entropy):
-    r"""Information Gain Ration Criterion
-
-    This handles cases where the target is a classification taking values
-    0, 1, ... K-2, K-1. If node m represents a region Rm with Nm observations,
-    then let
-
-        count_k = 1 / Nm \sum_{x_i in Rm} I(yi = k)
-
-    be the proportion of class k observations in node m.
-
-    The information gain ratio is based on the cross-entropy, defined as
-
-        cross-entropy = -\sum_{k=0}^{K-1} count_k log(count_k)
-    """
-
-    cdef double proxy_impurity_improvement(self) nogil:
-        """Compute a proxy of the impurity reduction
-
-        This method is used to speed up the search for the best split.
-        It is a proxy quantity such that the split that maximizes this value
-        also maximizes the impurity improvement. It neglects all constant terms
-        of the impurity decrease for a given split.
-
-        The absolute impurity improvement is only computed by the
-        impurity_improvement method once the best split has been found.
-        """
-
-        # Code is almost duplicated from impurity_improvement.
-        cdef double impurity_left
-        cdef double impurity_right
-        cdef double split_fraction_left = self.weighted_n_left/self.weighted_n_node_samples
-        cdef double split_fraction_right = self.weighted_n_right/self.weighted_n_node_samples
-        cdef double split_info = 1.0
-        # corrected gain ratio according to (https://arxiv.org/pdf/1801.08310.pdf) equation (9)
-
-        if split_fraction_left > 0.0:
-            split_info -= split_fraction_left * log(split_fraction_left)
-        if split_fraction_right > 0.0:
-            split_info -= split_fraction_right * log(split_fraction_right)
-
-        self.children_impurity(&impurity_left, &impurity_right)
-        # drops a factor in comparison to impurity_improvement to increase performance a bit
-        return (self.node_impurity() - (self.weighted_n_right / 
-                            self.weighted_n_node_samples * impurity_right)
-                         - (self.weighted_n_left / 
-                            self.weighted_n_node_samples * impurity_left)) / (split_info)
-
- 
-    cdef double impurity_improvement(self, double impurity) nogil:
-        """Compute the improvement in impurity
-
-        This method computes the improvement in impurity when a split occurs.
-        The weighted impurity improvement equation is the following:
-
-            N_t / N * (impurity - N_t_R / N_t * right_impurity
-                                - N_t_L / N_t * left_impurity)
-
-        where N is the total number of samples, N_t is the number of samples
-        at the current node, N_t_L is the number of samples in the left child,
-        and N_t_R is the number of samples in the right child,
-
-        Parameters
-        ----------
-        impurity : double
-            The initial impurity of the node before the split
-
-        Return
-        ------
-        double : improvement in impurity after the split occurs
-        """
-
-        cdef double impurity_left
-        cdef double impurity_right
-        cdef double split_fraction_left = self.weighted_n_left/self.weighted_n_node_samples
-        cdef double split_fraction_right = self.weighted_n_right/self.weighted_n_node_samples
-        cdef double split_info = 1.0
-        # corrected gain ratio according to (https://arxiv.org/pdf/1801.08310.pdf) equation (9)
-
-        if split_fraction_left > 0.0:
-            split_info -= split_fraction_left * log(split_fraction_left)
-        if split_fraction_right > 0.0:
-            split_info -= split_fraction_right * log(split_fraction_right)
-
-        self.children_impurity(&impurity_left, &impurity_right)
-
-        return ((self.weighted_n_node_samples / self.weighted_n_samples) *
-                (impurity - (self.weighted_n_right / 
-                             self.weighted_n_node_samples * impurity_right)
-                          - (self.weighted_n_left / 
-                             self.weighted_n_node_samples * impurity_left))) / (split_info)
 
 
 cdef class RegressionCriterion(Criterion):

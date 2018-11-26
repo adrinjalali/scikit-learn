@@ -606,7 +606,9 @@ cdef class GainRatio(Entropy):
         if self.weighted_n_right > 0:
             iv -= ((self.weighted_n_right / self.weighted_n_node_samples)
                    * log(self.weighted_n_right / self.weighted_n_node_samples))
-        return iv + 10
+        if iv > 0:
+            printf("iv: %g\n", iv)
+        return iv if iv > 0 else 1.2
 
     cdef double node_impurity(self) nogil:
         printf("Entropy: %g, iv: %g, gain_ratio: %g\n",
@@ -615,16 +617,16 @@ cdef class GainRatio(Entropy):
         printf("left: %g, right: %g\n", self.weighted_n_left,
                self.weighted_n_right)
         printf("total: %g\n", self.weighted_n_node_samples)
-        #return Entropy.node_impurity(self) / self.IV()
-        return Entropy.node_impurity(self)
+        return Entropy.node_impurity(self) / self.IV()
+        # return Entropy.node_impurity(self)
 
     cdef void children_impurity(self, double* impurity_left,
                                 double* impurity_right) nogil:
         Entropy.children_impurity(self, impurity_left,
                                   impurity_right)
-        #cdef double iv = self.IV()
-        #impurity_left[0] /= iv
-        #impurity_right[0] /= iv
+        cdef double iv = self.IV()
+        impurity_left[0] /= iv
+        impurity_right[0] /= iv
 
 
 cdef class Gini(ClassificationCriterion):

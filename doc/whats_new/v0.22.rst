@@ -7,7 +7,7 @@
 Version 0.22.0
 ==============
 
-**In Development**
+**November 20 2019**
 
 For a short description of the main highlights of the release, please
 refer to

@@ -8,7 +8,8 @@ Before a release
 
     $ cd build_tools; make authors; cd ..
 
-   and commit.
+   and commit. But only if it's not up to date. This can also be done outside
+   the release time.
 
 2. Confirm any blockers tagged for the milestone are resolved, and that other
    issues tagged for the milestone can be postponed.
@@ -17,7 +18,7 @@ Before a release
    change log is reasonably well curated. Some tools for these tasks include:
 
    - ``maint_tools/sort_whats_new.py`` can put what's new entries into
-     sections.
+     sections. It doesn't necessarily work though.
 
    - The ``maint_tools/whats_missing.sh`` script may be used to identify pull
      requests that were merged but likely missing from What's New.
@@ -45,6 +46,9 @@ while preparing the release.
 Making a release
 ----------------
 
+If there's an RC or a Beta before the release, continue from step 2 first.
+Step one can be done for the final release.
+
 1. Update docs:
 
    - Edit the doc/whats_new.rst file to add release title and commit
@@ -54,7 +58,7 @@ Making a release
 
    - Update the release date in whats_new.rst
 
-   - Edit the doc/index.rst to change the 'News' entry of the front page.
+   - Edit the index.html to change the 'News' entry of the front page.
 
    - Note that these changes should be made in master and cherry-picked into
      the release branch.

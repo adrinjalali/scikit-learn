@@ -15,6 +15,12 @@ refer to
 
 .. include:: changelog_legend.inc
 
+Website update
+--------------
+
+`Our website <https://scikit-learn.org/>`_ was revamped and given a fresh
+new look. :pr:`14849` by `Thomas Fan`_.
+
 Clear definition of the public API
 ----------------------------------
 
@@ -50,6 +56,10 @@ been moved to ``_birch.py``).
     find a public tool (without leading underscore) that isn't in the API
     reference, that means it should either be private or documented. Please
     let us know by opening an issue!
+
+This work was tracked in `issue 9250
+<https://github.com/scikit-learn/scikit-learn/issues/9250>`_ and `issue
+12927 <https://github.com/scikit-learn/scikit-learn/issues/12927>`_.
 
 
 Deprecations: using ``FutureWarning`` from now on
@@ -157,13 +167,12 @@ Changelog
   `affinity='cosine'` and `X` has samples that are all-zeros. :pr:`7943` by
   :user:`mthorrell`.
 
-
 :mod:`sklearn.compose`
 ......................
 
 - |Feature|  Adds :func:`compose.make_column_selector` which is used with
   :class:`compose.ColumnTransformer` to select DataFrame columns on the basis
-  of name and dtype. :pr:`12303` by `Thomas Fan `_.
+  of name and dtype. :pr:`12303` by `Thomas Fan`_.
 
 - |Fix| Fixed a bug in :class:`compose.ColumnTransformer` which failed to
   select the proper columns when using a boolean list, with NumPy older than
@@ -182,6 +191,13 @@ Changelog
 
 :mod:`sklearn.cross_decomposition`
 ..................................
+
+- |Enhancement| :class:`decomposition.KernelPCA` now properly checks the
+  eigenvalues found by the solver for numerical or conditioning issues. This
+  ensures consistency of results across solvers (different choices for
+  ``eigen_solver``), including approximate solvers such as ``'randomized'`` and
+  ``'lobpcg'`` (see :issue:`12068`).
+  :pr:`12145` by :user:`Sylvain Marié <smarie>`
 
 - |Fix| Fixed a bug where :class:`cross_decomposition.PLSCanonical` and
   :class:`cross_decomposition.PLSRegression` were raising an error when fitted
@@ -303,6 +319,11 @@ Changelog
 - |Fix| :func:`ensemble.VotingClassifier.predict_proba` will no longer be
   present when `voting='hard'`. :pr:`14287` by `Thomas Fan`_.
 
+- |Fix| The `named_estimators_` attribute in :class:`ensemble.VotingClassifier`
+  and :class:`ensemble.VotingRegressor` now correctly maps to dropped estimators.
+  Previously, the `named_estimators_` mapping was incorrect whenever one of the
+  estimators was dropped. :pr:`15375` by `Thomas Fan`_.
+
 - |Fix| Run by default
   :func:`utils.estimator_checks.check_estimator` on both
   :class:`ensemble.VotingClassifier` and :class:`ensemble.VotingRegressor`. It
@@ -412,7 +433,7 @@ Changelog
   k-Nearest Neighbors. :issue:`12852` by :user:`Ashim Bhattarai <ashimb9>` and
   `Thomas Fan`_.
 
-- |Enhancement| Adds parameter `add_indicator` to :class:`imputer.KNNImputer`
+- |Enhancement| Adds parameter `add_indicator` to :class:`impute.KNNImputer`
   to get indicator of missing data.
   :pr:`15010` by :user:`Guillaume Lemaitre <glemaitre>`.
 
@@ -426,6 +447,11 @@ Changelog
 
 - |Efficiency| :meth:`impute.MissingIndicator.fit_transform` avoid repeated
   computation of the masked matrix. :pr:`14356` by :user:`Harsh Soni <harsh020>`.
+
+- |Fix| Fixed a bug in :class:`impute.IterativeImputer` where features where
+  imputed in the reverse desired order with ``imputation_order`` either
+  ``"ascending"`` or ``"descending"``. :pr:`15393` by
+  :user:`Venkatachalam N <venkyyuvy>`.
 
 :mod:`sklearn.inspection`
 .........................
@@ -446,7 +472,9 @@ Changelog
 
 - |Enhancement| :func:`inspection.partial_dependence` accepts pandas DataFrame
   and :class:`pipeline.Pipeline` containing :class:`compose.ColumnTransformer`.
-  :pr:`14028` by :user:`Guillaume Lemaitre <glemaitre>`.
+  In addition :func:`inspection.plot_partial_dependence` will use the column
+  names by default when a dataframe is passed.
+  :pr:`14028` and :pr:`15429` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.kernel_approximation`
 ...................................
@@ -465,7 +493,7 @@ Changelog
 
 - |Efficiency| The 'liblinear' logistic regression solver is now faster and
   requires less memory.
-  :pr:`14108`, pr:`14170`, pr:`14296` by :user:`Alex Henrie <alexhenrie>`.
+  :pr:`14108`, :pr:`14170`, :pr:`14296` by :user:`Alex Henrie <alexhenrie>`.
 
 - |Fix| :class:`linear_model.Ridge` now correctly fits an intercept when `X` is
   sparse, `solver="auto"` and `fit_intercept=True`, because the default solver
@@ -549,9 +577,13 @@ Changelog
   Gain and Normalized Discounted Cumulative Gain. :pr:`9951` by :user:`Jérôme
   Dockès <jeromedockes>`.
 
+- |Feature| :func:`metrics.plot_precision_recall_curve` has been added to plot
+  precision recall curves. :pr:`14936` by `Thomas Fan`_.
+
 - |Feature| Added multiclass support to :func:`metrics.roc_auc_score` with
-  corresponding scorers 'roc_auc_ovr', 'roc_auc_ovo', 'roc_auc_ovr_weighted', 
-  and 'roc_auc_ovo_weighted'. :pr:`12789` and :pr:`15274` by 
+  corresponding scorers `'roc_auc_ovr'`, `'roc_auc_ovo'`,
+  `'roc_auc_ovr_weighted'`, and `'roc_auc_ovo_weighted'`.
+  :pr:`12789` and :pr:`15274` by 
   :user:`Kathy Chen <kathyxchen>`, :user:`Mohamed Maskani <maskani-moh>`, and
   `Thomas Fan`_.
 
@@ -599,6 +631,11 @@ Changelog
   used as the :term:`scoring` parameter of model-selection tools.
   :pr:`14417` by `Thomas Fan`_.
 
+- |Enhancement| :func:`metrics.confusion_matrix` accepts a parameters
+  `normalize` allowing to normalize the confusion matrix by column, rows, or
+  overall.
+  :pr:`15625` by `Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
@@ -634,6 +671,10 @@ Changelog
 
 - |Fix| :class:`multioutput.MultiOutputClassifier` now has attribute
   ``classes_``. :pr:`14629` by :user:`Agamemnon Krasoulis <agamemnonc>`.
+
+- |Fix| :class:`multioutput.MultiOutputClassifier` now has `predict_proba`
+  as property and can be checked with `hasattr`.
+  :issue:`15488` :pr:`15490` by :user:`Rebekah Kim <rebekahkim>`
 
 :mod:`sklearn.naive_bayes`
 ...............................
@@ -713,6 +754,19 @@ Changelog
 - |Fix| KernelCenterer now throws error when fit on non-square
   :class:`preprocessing.KernelCenterer`
   :pr:`14336` by :user:`Gregory Dexter <gdex1>`.
+
+:mod:`sklearn.model_selection`
+..............................
+
+- |Fix| :class:`model_selection.GridSearchCV` and
+  `model_selection.RandomizedSearchCV` now supports the
+  :term:`_pairwise` property, which prevents an error during cross-validation
+  for estimators with pairwise inputs (such as
+  :class:`neighbors.KNeighborsClassifier` when :term:`metric` is set to
+  'precomputed').
+  :pr:`13925` by :user:`Isaac S. Robson <isrobson>` and :pr:`15524` by
+  :user:`Xun Tang <xun-tang>`.
+
 
 :mod:`sklearn.svm`
 ..................
@@ -832,14 +886,6 @@ Changelog
   - ``optimize.newton_cg``
   - ``random.random_choice_csc``
 
-:mod:`sklearn.voting`
-.....................
-
-- |Fix| The `named_estimators_` attribute in :class:`voting.VotingClassifier`
-  and :class:`voting.VotingRegressor` now correctly maps to dropped estimators.
-  Previously, the `named_estimators_` mapping was incorrect whenever one of the
-  estimators was dropped. :pr:`15375` by `Thomas Fan`_.
-
 :mod:`sklearn.isotonic`
 ..................................
 
@@ -903,62 +949,3 @@ These changes mostly affect library developers.
 - |Fix| The estimators tags resolution now follows the regular MRO. They used
   to be overridable only once. :pr:`14884` by :user:`Andreas Müller
   <amueller>`.
-
-Code and Documentation Contributors
------------------------------------
-
-Thanks to everyone who has contributed to the maintenance and improvement of
-the project since version 0.21.3, including:
-
-  Aaron Alphonsus, Abbie Popa, Abdur-Rahmaan Janhangeer, abenbihi, Abhinav
-  Sagar, Abhishek Jana, Abraham K. Lagat, Adam J. Stewart, Aditya Vyas, Adrin
-  Jalali, Agamemnon Krasoulis, Alec Peters, Alessandro Surace, Alexandre de
-  Siqueira, Alexandre Gramfort, alexgoryainov, Alex Henrie, Alex Itkes,
-  alexshacked, Allen Akinkunle, Anaël Beaugnon, Anders Kaseorg, Andrea
-  Maldonado, Andrea Navarrete, Andreas Mueller, Andreas Schuderer, Andrew
-  Nystrom, Angela Ambroz, Anisha Keshavan, Ankit Jha, Antonio Gutierrez, Anuja
-  Kelkar, Archana Alva, arnaudstiegler, arpanchowdhry, ashimb9, Ayomide
-  Bamidele, Baran Buluttekin, barrycg, Bharat Raghunathan, Bill Mill, Biswadip
-  Mandal, blackd0t, Brian G. Barkley, Bryan Yang, c56pony, camilaagw,
-  cartman_nabana, catajara, Cat Chenal, Cathy, cgsavard, Charles Vesteghem,
-  Chiara Marmo, Christian Lorentzen, Christos Aridas, Dakota Grusak, Daniel
-  Grady, Daniel Perry, Danna Naser, DatenBergwerk, David Dormagen, deeplook,
-  Dillon Niederhut, Dong-hee Na, Dougal J. Sutherland, DrGFreeman, Dylan
-  Cashman, edvardlindelof, Eric Larson, Eric Ndirangu, Fanny, federicopisanu,
-  Felix Divo, flaviomorelli, FranciDona, Franco M. Luque, Frank Hoang, Frederic
-  Haase, Gabriel Altay, Gabriel do Vale Rios, Gael Varoquaux, ganevgv, gdex1,
-  getgaurav2, Gideon Sonoiya, Gordon Chen, gpapadok, Greg Mogavero, Grzegorz
-  Szpak, Guillaume Lemaitre, Guillem García Subies, H4dr1en, hadshirt, Hanmin
-  Qin, Hannah Bruce Macdonald, Harsh Mahajan, Harsh Soni, Hossein Pourbozorg,
-  Ian Sanders, Ingrid Spielman, jaehong park, Jaime Ferrando Huertas, James
-  Hill, James Myatt, Jay, jeremiedbb, jeromedockes, Jesper Dramsch, Joan
-  Massich, Joanna Zhang, Joel Nothman, Johann Faouzi, Jonathan Rahn, Jon
-  Cusick, Jose Ortiz, Kanika Sabharwal, kellycarmody, Kennedy Kang'ethe,
-  Kensuke Arai, Kesshi Jordan, Kevad, Kevin Winata, Kevin Yu-Sheng Li, Kirill
-  Dolmatov, Kirthi Shankar Sivamani, krishna katyal, Lakshmi Krishnan, Lakshya
-  KD, LalliAcqua, lbfin, Léonard Binet, Loic Esteve, loopyme, lostcoaster,
-  Louis Huynh, lrjball, Lutz Roeder, MaggieChege, Maithreyi Venkatesh,
-  Maltimore, Maocx, Marc Torrellas, Marie Douriez, Markus, Markus Frey, Martina
-  G. Vilas, Martin Oywa, Martin Thoma, Masashi SHIBATA, Maxwell Aladago,
-  mbillingr, m-clare, Meghann Agarwal, Micah Smith, miguelbarao, Miguel
-  Cabrera, Ming Li, motmoti, mschaffenroth, mthorrell, Natasha Borders,
-  nezar-a, Nicolas Hug, Nidhin Pattaniyil, Nikita Titov, Nishan Singh Mann,
-  Nitya Mandyam, norvan, notmatthancock, novaya, nxorable, Oleg Stikhin,
-  Oleksandr Pavlyk, Olivier Grisel, Omar Saleem, Owen Flanagan, panpiort8,
-  Paolo, Paolo Toccaceli, Paresh Mathur, Peng Yu, Peter Marko, pierretallotte,
-  poorna-kumar, pspachtholz, qdeffense, Rajat Garg, Raphaël Bournhonesque, Ray,
-  Ray Bell, Reza Gharibi, Richard Payne, Richard W, rlms, Robert Juergens, Rok
-  Mihevc, Roman Feldbauer, Roman Yurchak, RuchitaGarde, Ruth Waithera, Sackey,
-  Sam Dixon, Samesh Lakhotia, Samuel Taylor, Sarra Habchi, Scott Gigante, Scott
-  Sievert, Scott White, Sebastian Pölsterl, Sergey Feldman, SeWook Oh,
-  she-dares, Shreya V, Shubham Mehta, Shuzhe Xiao, SimonCW, smujjiga, Sönke
-  Behrends, Soumirai, Sourav Singh, stefan-matcovici, steinfurt, Stéphane
-  Couvreur, Stephan Tulkens, Stephen Cowley, Stephen Tierney, SylvainLan,
-  theoptips, theotheo, Thierno Ibrahima DIOP, Thomas Edwards, Thomas J Fan,
-  Thomas Moreau, Thomas Schmitt, Tilen Kusterle, Tim Bicker, Timsaur, Tim
-  Staley, Tirth Patel, Tola A, Tom Augspurger, Tom Dupré la Tour, topisan,
-  Trevor Stephens, ttang131, Urvang Patel, Vathsala Achar, veerlosar,
-  Venkatachalam N, Victor Luzgin, Vincent Jeanselme, Vincent Lostanlen,
-  Vladimir Korolev, vnherdeiro, Wenbo Zhao, Wendy Hu, willdarnell, William de
-  Vazelhes, wolframalpha, xavier dupré, xcjason, x-martian, xsat, Yinglr,
-  yokasre, Yulia Zamriy, Zhao Feng

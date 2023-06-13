@@ -1,0 +1,51 @@
+name: linter-bot-comment
+
+on:
+  - pull_request
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: 3.11
+
+      - name: Install dependencies
+        run: |
+          source build_tools/shared.sh
+          # Include pytest compatibility with mypy
+          pip install pytest flake8 $(get_dep mypy min) $(get_dep black min) cython-lint
+
+      - name: Run linting
+        run: ./build_tools/linting.sh
+
+  comment:
+    needs: [lint]
+    if: ${{ always() && needs.lint.result == 'failure' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Comment on pull request
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            const failedJobs = '${{ needs.lint.outputs }}';
+            let message = `Linter is failing on your pull request. Please enable pre-commit hooks (info under this link: ...) \n\n`;
+            if (failedJobs.includes('isort')) {
+              message += `For the issue with isort, you can run:\n\n\`isort .\`\n\nAnd then commit the changes:\n\n\`git commit -am "ran isort"\`\n\`git push\`\n`;
+            }
+            if (failedJobs.includes('black')) {
+              message += `For the issue with black, you can run:\n\n\`black .\`\n\nAnd then commit the changes:\n\n\`git commit -am "ran black"\`\n\`git push\`\n`;
+            }
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: message,
+            })

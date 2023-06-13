@@ -68,6 +68,7 @@ def clone(estimator, *, safe=True):
     return different results from the original estimator. More details can be
     found in :ref:`randomness`.
     """
+
     if hasattr(estimator, "__sklearn_clone__") and not inspect.isclass(estimator):
         return estimator.__sklearn_clone__()
     return _clone_parametrized(estimator, safe=safe)
@@ -921,6 +922,7 @@ class OneToOneFeatureMixin:
     This mixin assumes there's a 1-to-1 correspondence between input features
     and output features, such as :class:`~preprocessing.StandardScaler`.
     """
+
 
 
     def get_feature_names_out(self, input_features=None):

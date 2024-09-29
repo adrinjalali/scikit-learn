@@ -7,7 +7,7 @@ import warnings
 from functools import partial
 from inspect import isfunction
 
-from sklearn import clone, config_context
+from sklearn import config_context
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.cluster import (
     HDBSCAN,
@@ -593,12 +593,12 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
     RBFSampler: {"check_dict_unchanged": dict(n_components=1)},
     SGDClassifier: {
         "check_pandas_column_name_consistency": dict(
-            early_stopping=True, n_iter_no_change=1
+            early_stopping=True, n_iter_no_change=1, max_iter=5
         )
     },
     SGDRegressor: {
         "check_pandas_column_name_consistency": dict(
-            early_stopping=True, n_iter_no_change=1
+            early_stopping=True, n_iter_no_change=1, max_iter=5
         )
     },
     SkewedChi2Sampler: {"check_dict_unchanged": dict(n_components=1)},
@@ -718,6 +718,5 @@ def _yield_instances_for_check(check, estimator_orig):
         param_set = [param_set]
 
     for params in param_set:
-        estimator = clone(estimator_orig)
-        estimator.set_params(**params)
+        estimator = type(estimator_orig)(**params)
         yield estimator

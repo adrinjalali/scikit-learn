@@ -100,7 +100,6 @@ def _yield_api_checks(estimator):
 
 
 def _yield_dataframe_checks(estimator):
-    yield check_n_features_in_after_fitting
     yield check_pandas_column_name_consistency
 
 
@@ -626,21 +625,22 @@ def check_estimator(
 
     name = type(estimator).__name__
 
-    def checks_generator():
+    def checks_generator(estimator):
         # we first need to check if the estimator is cloneable for the rest of the tests
         # to run
         yield estimator, partial(check_estimator_cloneable, name)
+
         for check in _yield_all_checks(estimator, dataframe=dataframe, legacy=legacy):
-            check = _maybe_skip(estimator, check)
-            for check_instance in _yield_instances_for_check(check, estimator):
-                yield check_instance, partial(check, name)
+            for instance_for_check in _yield_instances_for_check(check, estimator):
+                check = _maybe_skip(instance_for_check, check)
+                yield instance_for_check, partial(check, name)
 
     if generate_only:
-        return checks_generator()
+        return checks_generator(estimator)
 
-    for estimator, check in checks_generator():
+    for estimator_for_check, check in checks_generator(estimator):
         try:
-            check(estimator)
+            check(estimator_for_check)
         except SkipTest as exception:
             # SkipTest is thrown when pandas can't be imported, or by checks
             # that are in the xfail_checks tag
@@ -3944,6 +3944,11 @@ def check_n_features_in_after_fitting(name, estimator_orig):
     # Make sure that n_features_in are checked after fitting
     tags = get_tags(estimator_orig)
 
+    if tags.input_tags.pairwise:
+        raise SkipTest(
+            "Pairwise input doesn't provide number of input features to be validated."
+        )
+
     is_supported_X_types = tags.input_tags.two_d_array or tags.input_tags.categorical
 
     if not is_supported_X_types or tags.no_validation:
@@ -4777,6 +4782,9 @@ def _check_dataframe_column_names_consistency(name, estimator_orig):
 
 @ignore_warnings(category=(FutureWarning))
 def check_pandas_column_name_consistency(name, estimator_orig):
+    if get_tags(estimator_orig).input_tags.pairwise:
+        raise SkipTest("Column names for pairwise input is meaningless.")
+
     estimator = clone(estimator_orig)
 
     # NOTE: When running `check_dataframe_column_names_consistency` on a meta-estimator

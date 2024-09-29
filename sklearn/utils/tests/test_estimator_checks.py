@@ -32,6 +32,7 @@ from sklearn.svm import SVC, NuSVC
 from sklearn.utils import _array_api, all_estimators, deprecated
 from sklearn.utils._param_validation import Interval, StrOptions
 from sklearn.utils._tags import default_tags
+from sklearn.utils._test_common.instance_generator import _construct_instances
 from sklearn.utils._testing import (
     MinimalClassifier,
     MinimalRegressor,
@@ -482,8 +483,8 @@ class TaggedBinaryClassifier(UntaggedBinaryClassifier):
 
 class RequiresPositiveXRegressor(LinearRegression):
     def fit(self, X, y):
-        X, y = validate_data(self, X, y, multi_output=True)
-        if (X < 0).any():
+        X_, _ = validate_data(self, X, y, multi_output=True)
+        if (X_ < 0).any():
             raise ValueError("negative X values not supported!")
         return super().fit(X, y)
 
@@ -495,8 +496,8 @@ class RequiresPositiveXRegressor(LinearRegression):
 
 class RequiresPositiveYRegressor(LinearRegression):
     def fit(self, X, y):
-        X, y = validate_data(self, X, y, multi_output=True)
-        if (y <= 0).any():
+        _, y_ = validate_data(self, X, y, multi_output=True)
+        if (y_ <= 0).any():
             raise ValueError("negative y values not supported!")
         return super().fit(X, y)
 
@@ -814,7 +815,7 @@ def test_check_estimator_clones():
     ]:
         # without fitting
         with ignore_warnings(category=ConvergenceWarning):
-            est = Estimator()
+            est = next(_construct_instances(Estimator))
             set_random_state(est)
             old_hash = joblib.hash(est)
             check_estimator(est)
